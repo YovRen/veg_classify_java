@@ -8,8 +8,8 @@ import android.content.res.AssetFileDescriptor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.util.Base64;
+import android.util.Log;
 
-import androidx.appcompat.app.AlertDialog;
 
 import com.google.gson.Gson;
 
@@ -33,13 +33,13 @@ import okhttp3.RequestBody;
 import okhttp3.Response;
 
 public class Utils {
-    public static String json = null;
 
     public static Bitmap sendPacketToServer(Protocol.Packet packet) {
+        String json = null;
         Gson gson = new Gson();
         json = gson.toJson(packet);
-
-        byte[] decodedByteArray = Base64.decode(packet.products.get(0).value.first, Base64.DEFAULT);
+        Log.d("messagekey", json);
+        byte[] decodedByteArray = Base64.decode(packet.products.get(0).imageLables.imgStr, Base64.DEFAULT);
         Bitmap restoredBitmap = BitmapFactory.decodeByteArray(decodedByteArray, 0, decodedByteArray.length);
 
 
@@ -106,7 +106,6 @@ public class Utils {
 
         return content;
     }
-
 
     public static ByteBuffer loadModelFile(Context context, int modelPath) throws IOException {
         AssetFileDescriptor file = context.getResources().openRawResourceFd(modelPath);

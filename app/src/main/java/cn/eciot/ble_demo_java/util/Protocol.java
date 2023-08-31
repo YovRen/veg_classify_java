@@ -1,75 +1,120 @@
 package cn.eciot.ble_demo_java.util;
 
-import static cn.eciot.ble_demo_java.RecognitionActivity.toSaveImage;
-import static cn.eciot.ble_demo_java.RecognitionActivity.toSaveLables;
+
+import static cn.eciot.ble_demo_java.RecognitionActivity.imageLablesMyQueue;
 
 import android.annotation.SuppressLint;
 import android.graphics.Bitmap;
-import android.media.Image;
+import android.util.Log;
 
+
+import java.text.DateFormat;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.stream.IntStream;
 
 import cn.eciot.ble_demo_java.RecognitionActivity.Recognition;
 
 public class Protocol {
 
-    static class Product {
-        int number;
-        int weight;
-        int unitPrice;
-        int amount;
-        Value value;
+    public static int APPROX_WEIGHT_GRAM = 20;
+    public static int QUEUE_TIME_SECOND = 600;
 
-        public Product(int number, int weight, int unitPrice, int amount, Value value) {
-            this.number = number;
-            this.weight = weight;
-            this.unitPrice = unitPrice;
-            this.amount = amount;
-            this.value = value;
+    public static class MyTime {
+        String timeStr;
+        Long timeLong;
+
+        @SuppressLint("SimpleDateFormat")
+        public MyTime() throws ParseException {
+            DateFormat dateFormat = new SimpleDateFormat("[yyyy-MM-dd HH:mm:ss]");
+            this.timeStr = new SimpleDateFormat("[yyyy-MM-dd HH:mm:ss]").format(new Date(System.currentTimeMillis()));
+            this.timeLong = dateFormat.parse(this.timeStr).getTime();
         }
     }
 
-    static class Key {
-        private final int a;
-        private final int b;
+    public static class MessageKey extends MyTime {
+        private final int weight;
+        private final int unitPrice;
 
-        public Key(int a, int b) {
-            this.a = a;
-            this.b = b;
+        public MessageKey(int weight, int unitPrice) throws ParseException {
+            super();
+            this.weight = weight;
+            this.unitPrice = unitPrice;
         }
 
         @Override
         public boolean equals(Object o) {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
-            Key key = (Key) o;
-            return a == key.a && b == key.b;
+            MessageKey messageKey = (MessageKey) o;
+            return weight == messageKey.weight && unitPrice == messageKey.unitPrice;
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(a, b);
+            return Objects.hash(weight, unitPrice);
         }
     }
 
-    static class Value {
-        public final String first;
-        public final List<Recognition> second;
+    public static class ImageLables extends MyTime {
+        public final String imgStr;
+        public final List<Recognition> lablesList;
 
-        public Value(String first, List<Recognition> second) {
-            this.first = first;
-            this.second = second;
+        public ImageLables(String imgStr, List<Recognition> lablesList) throws ParseException {
+            super();
+            this.imgStr = imgStr;
+            this.lablesList = lablesList;
         }
     }
 
-    static class Packet {
-        String timeStr;
+    public static class MyQueue<T> extends LinkedList<T> {
+
+        public int seconds;
+
+        public MyQueue(int seconds) {
+            this.seconds = seconds;
+        }
+
+        public void enqueue(T item) throws ParseException {
+            while (this.size() != 0 && (((MyTime) item).timeLong - ((MyTime) getFirst()).timeLong) / 1000 > seconds) {
+                removeFirst();
+            }
+            addLast(item);
+        }
+
+        public List<T> timeBetween(Long startTime, Long endTime) {
+            if (this.size() == 0)
+                return null;
+            assert (startTime <= endTime);
+            int startIndex = Math.max(IntStream.range(0, this.size()).filter(idx -> ((MyTime) get(idx)).timeLong > startTime).findFirst().orElse(-1) - 1, 0);
+            int endIndex = Math.min(IntStream.range(0, this.size()).filter(idx -> ((MyTime) get(idx)).timeLong > endTime).findFirst().orElse(this.size()), this.size() - 1);
+            return this.subList(startIndex, endIndex);
+        }
+    }
+
+    public static class Product {
+        int number;
+        int weight;
+        int unitPrice;
+        int amount;
+        ImageLables imageLables;
+
+        public Product(int number, int weight, int unitPrice, int amount, ImageLables imageLables) {
+            this.number = number;
+            this.weight = weight;
+            this.unitPrice = unitPrice;
+            this.amount = amount;
+            this.imageLables = imageLables;
+        }
+    }
+
+    public static class Packet {
         int transactionType;
         int totalAmount;
         int transactionCount;
@@ -77,9 +122,7 @@ public class Protocol {
         int status;
         int checkSum;
 
-        @SuppressLint("SimpleDateFormat")
-        public Packet(int transactionType, int totalAmount, int transactionCount, List<Product> products, int status, int checkSum) {
-            this.timeStr = new SimpleDateFormat("[yyyy-MM-dd HH:mm:ss]").format(new Date(System.currentTimeMillis()));
+        public Packet(int transactionType, int totalAmount, int transactionCount, List<Product> products, int status, int checkSum) throws ParseException {
             this.transactionType = transactionType;
             this.totalAmount = totalAmount;
             this.transactionCount = transactionCount;
@@ -89,10 +132,11 @@ public class Protocol {
         }
     }
 
-    static Map<Key, Value> productMap = new HashMap<>();
-    static byte[] longByte;
+    public static MyQueue<MessageKey> messageKeyMyQueue = new MyQueue<>(QUEUE_TIME_SECOND);
+    public static byte[] longByte;
 
-    public static Bitmap parseMessage(byte[] data) {
+    public static Bitmap parseMessage(byte[] data) throws ParseException {
+        Long lastZero = 0L;
         // 解析协议头
         if (data.length == 20) {
             // 解析秤重协议
@@ -101,11 +145,14 @@ public class Protocol {
             int status = data[18];
             //处理信息
             if (status == 1) {
-                productMap.put(new Key(weight, unitPrice), new Value(toSaveImage, toSaveLables));
+                messageKeyMyQueue.enqueue(new MessageKey(weight, unitPrice));
+                Log.d("messagekey", String.valueOf(weight) + " " + String.valueOf(unitPrice));
             }
+            if (weight < 0.2)
+                lastZero = new MyTime().timeLong;
         } else if (data.length == 17) {
             // 解析累计或支付协议
-            if (productMap.size() == 0) return null;
+            if (messageKeyMyQueue.size() == 0) return null;
             data = concatenateByteArrays(longByte, data);
             longByte = null;
             int transactionType = data[7];
@@ -120,14 +167,34 @@ public class Protocol {
                 int productWeight = byteArrayToInt(data, offset + 1, offset + 3);
                 int productUnitPrice = byteArrayToInt(data, offset + 4, offset + 6);
                 int productAmount = byteArrayToInt(data, offset + 7, offset + 9);
-                toSaveProducts.add(new Product(productNumber, productWeight, productUnitPrice, productAmount, productMap.get(new Key(productWeight, productUnitPrice))));
+
+                int productIndex = IntStream.range(0, messageKeyMyQueue.size()).filter(idx -> messageKeyMyQueue.get(idx).weight == productWeight && messageKeyMyQueue.get(idx).unitPrice == productUnitPrice).findFirst().orElse(-1);
+                Long productStartTime = lastZero, productEndTime = new MyTime().timeLong;
+                for (int j = productIndex; j >= 0; j--) {
+                    int weight = messageKeyMyQueue.get(j).weight;
+                    if (Math.abs(weight - productWeight) > APPROX_WEIGHT_GRAM) {
+                        productStartTime = messageKeyMyQueue.get(j).timeLong;
+                        break;
+                    }
+                }
+                for (int j = productIndex; j < messageKeyMyQueue.size(); j++) {
+                    int weight = messageKeyMyQueue.get(j).weight;
+                    if (Math.abs(weight - productWeight) > APPROX_WEIGHT_GRAM) {
+                        productEndTime = messageKeyMyQueue.get(j).timeLong;
+                        break;
+                    }
+                }
+                List<ImageLables> imageLablesList = imageLablesMyQueue.timeBetween(productStartTime, productEndTime);
+                //TODO: Decide how to choose the best Image;
+                toSaveProducts.add(new Product(productNumber, productWeight, productUnitPrice, productAmount, imageLablesList.get(imageLablesList.size() - 1)));
                 offset += 15;
             }
             int status = data[offset];
             int checksum = data[offset + 1];
             Packet packet = new Packet(transactionType, totalAmount, transactionCount, toSaveProducts, status, checksum);
             Bitmap QrCodeBitmap = Utils.sendPacketToServer(packet);
-            productMap.clear();
+            imageLablesMyQueue.clear();
+            messageKeyMyQueue.clear();
             return QrCodeBitmap;
         } else if (data.length == 15 || data.length == 12) {
             longByte = concatenateByteArrays(longByte, data);
@@ -148,7 +215,6 @@ public class Protocol {
         return combined;
     }
 
-    // 将字节数组的一段转换为整数
     public static int byteArrayToInt(byte[] bytes, int startIndex, int endIndex) {
         int value = 0;
         for (int i = startIndex; i <= endIndex; i++) {

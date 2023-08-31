@@ -1,5 +1,7 @@
 package cn.eciot.ble_demo_java;
 
+import static cn.eciot.ble_demo_java.util.Protocol.QUEUE_TIME_SECOND;
+import static cn.eciot.ble_demo_java.util.Protocol.parseMessage;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
@@ -37,8 +39,10 @@ import com.google.common.util.concurrent.ListenableFuture;
 
 import cn.eciot.ble_demo_java.databinding.RecognitionItemBinding;
 import cn.eciot.ble_demo_java.util.BleService;
-import cn.eciot.ble_demo_java.util.Protocol;
+import cn.eciot.ble_demo_java.util.Protocol.ImageLables;
+import cn.eciot.ble_demo_java.util.Protocol.MyQueue;
 import cn.eciot.ble_demo_java.util.Utils;
+
 import pub.devrel.easypermissions.EasyPermissions;
 
 import org.tensorflow.lite.Interpreter;
@@ -48,6 +52,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -55,14 +60,6 @@ import java.util.concurrent.Executors;
 import java.util.stream.IntStream;
 
 public class RecognitionActivity extends AppCompatActivity {
-    public static String toSaveImage;
-    public static List<Recognition> toSaveLables;
-    private static final int MAX_RESULT_DISPLAY = 5; // Maximum number of results displayed
-    private static final int REQUEST_CODE_PERMISSIONS = 999; // Return code after asking for permission
-    private static final String[] REQUIRED_PERMISSIONS = {Manifest.permission.CAMERA, android.Manifest.permission.ACCESS_FINE_LOCATION, android.Manifest.permission.ACCESS_COARSE_LOCATION}; // permission needed
-    private final ExecutorService cameraExecutor = Executors.newSingleThreadExecutor();
-    private PreviewView viewFinder;
-    private RecognitionListViewModel recogViewModel;
 
     interface RecognitionListener {
         void onRecognition(List<Recognition> recognitionList);
@@ -101,8 +98,6 @@ public class RecognitionActivity extends AppCompatActivity {
             this.binding = binding;
         }
 
-        // Binding all the fields to the view - to see which UI element is bind to which field, check
-        // out layout/recognition_item.xml
         void bindTo(Recognition recognition) {
             binding.setRecognitionItem(recognition);
             binding.executePendingBindings();
@@ -118,9 +113,7 @@ public class RecognitionActivity extends AppCompatActivity {
             this.ctx = ctx;
         }
 
-        /**
-         * Inflating the ViewHolder with recognition_item layout and data binding
-         */
+
         @NonNull
         @Override
         public RecognitionViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
@@ -147,6 +140,13 @@ public class RecognitionActivity extends AppCompatActivity {
         }
     }
 
+    private static final int MAX_RESULT_DISPLAY = 5; // Maximum number of results displayed
+    private static final int REQUEST_CODE_PERMISSIONS = 999; // Return code after asking for permission
+    private static final String[] REQUIRED_PERMISSIONS = {Manifest.permission.CAMERA, android.Manifest.permission.ACCESS_FINE_LOCATION, android.Manifest.permission.ACCESS_COARSE_LOCATION}; // permission needed
+    private final ExecutorService cameraExecutor = Executors.newSingleThreadExecutor();
+    private PreviewView viewFinder;
+    private RecognitionListViewModel recogViewModel;
+    public static MyQueue<ImageLables> imageLablesMyQueue = new MyQueue<>(QUEUE_TIME_SECOND);
 
     @SuppressLint("SetTextI18n")
     @Override
@@ -165,7 +165,12 @@ public class RecognitionActivity extends AppCompatActivity {
 
 
         BleService.setBLECharacteristicValueChangeCallback((byte[] bytes) -> runOnUiThread(() -> {
-            Bitmap qrcode = Protocol.parseMessage(bytes);
+            Bitmap qrcode = null;
+            try {
+                qrcode = parseMessage(bytes);
+            } catch (ParseException e) {
+                throw new RuntimeException(e);
+            }
             if (qrcode != null) ((ImageView) findViewById(R.id.iv_qrcode)).setImageBitmap(qrcode);
         }));
 
@@ -265,7 +270,7 @@ public class RecognitionActivity extends AppCompatActivity {
             ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
             mapImg.compress(Bitmap.CompressFormat.JPEG, 100, byteArrayOutputStream);
             byte[] byteArray = byteArrayOutputStream.toByteArray();
-            toSaveImage = Base64.encodeToString(byteArray, Base64.DEFAULT);
+            String toSaveImage = Base64.encodeToString(byteArray, Base64.DEFAULT);
 
             int[] pixels = new int[224 * 224];
             mapImg.getPixels(pixels, 0, 224, 0, 0, 224, 224);
@@ -280,7 +285,7 @@ public class RecognitionActivity extends AppCompatActivity {
             float[][] imageFeatures = new float[1][1024];
             imageItp.run(bufferImg, imageFeatures);
             float[] result = Utils.softmax(Utils.cosineSimilarity(imageFeatures, textFeatures)[0]);
-            toSaveLables = new ArrayList<>();
+            List<Recognition> toSaveLables = new ArrayList<>();
             for (int i = 0; i < result.length; i++) {
                 toSaveLables.add(new Recognition(texts.get(i), result[i]));
             }
@@ -288,6 +293,11 @@ public class RecognitionActivity extends AppCompatActivity {
             if (toSaveLables.size() > MAX_RESULT_DISPLAY) toSaveLables = toSaveLables.subList(0, 5);
             listener.onRecognition(toSaveLables);
 
+            try {
+                imageLablesMyQueue.enqueue(new ImageLables(toSaveImage, toSaveLables));
+            } catch (ParseException e) {
+                throw new RuntimeException(e);
+            }
             imageProxy.close();
         }
     }
