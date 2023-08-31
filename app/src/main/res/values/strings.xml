@@ -1,0 +1,10 @@
+<resources>
+    <string name="app_name">允探果蔬</string>
+    <string name="title_name">允探果蔬识别</string>
+    <string name="DataReceive">数据接收：</string>
+    <string name="DataSend">数据发送：</string>
+    <string name="Send">发送</string>
+    <string name="Clear">清空</string>
+    <string name="_50">-50</string>
+    <string name="enter">确认</string>
+</resources>
