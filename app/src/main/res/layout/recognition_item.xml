@@ -6,7 +6,7 @@
     <data>
         <variable
             name="recognitionItem"
-            type="cn.eciot.ble_demo_java.RecognitionActivity.Recognition" />
+            type="cn.atrudom.veg_classify_java.RecognitionActivity.Recognition" />
     </data>
 
     <LinearLayout

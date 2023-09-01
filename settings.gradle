@@ -1,2 +1,2 @@
 include ':app'
-rootProject.name = "ble-demo-java"
+rootProject.name = "veg_classify_java"

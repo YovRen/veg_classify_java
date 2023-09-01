@@ -1,7 +1,7 @@
-package cn.eciot.ble_demo_java;
+package cn.atrudom.veg_classify_java;
 
-import static cn.eciot.ble_demo_java.util.Protocol.QUEUE_TIME_SECOND;
-import static cn.eciot.ble_demo_java.util.Protocol.parseMessage;
+import static cn.atrudom.veg_classify_java.util.Protocol.QUEUE_TIME_SECOND;
+import static cn.atrudom.veg_classify_java.util.Protocol.parseMessage;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
@@ -37,11 +37,11 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.common.util.concurrent.ListenableFuture;
 
-import cn.eciot.ble_demo_java.databinding.RecognitionItemBinding;
-import cn.eciot.ble_demo_java.util.BleService;
-import cn.eciot.ble_demo_java.util.Protocol.ImageLables;
-import cn.eciot.ble_demo_java.util.Protocol.MyQueue;
-import cn.eciot.ble_demo_java.util.Utils;
+import cn.atrudom.veg_classify_java.databinding.RecognitionItemBinding;
+import cn.atrudom.veg_classify_java.util.BleService;
+import cn.atrudom.veg_classify_java.util.Protocol.ImageLables;
+import cn.atrudom.veg_classify_java.util.Protocol.MyQueue;
+import cn.atrudom.veg_classify_java.util.Utils;
 
 import pub.devrel.easypermissions.EasyPermissions;
 

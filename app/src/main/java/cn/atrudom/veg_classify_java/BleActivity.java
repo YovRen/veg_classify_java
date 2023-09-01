@@ -1,4 +1,4 @@
-package cn.eciot.ble_demo_java;
+package cn.atrudom.veg_classify_java;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -26,7 +26,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 
-import cn.eciot.ble_demo_java.util.BleService;
+import cn.atrudom.veg_classify_java.util.BleService;
 
 public class BleActivity extends AppCompatActivity {
     public static class DeviceInfo {

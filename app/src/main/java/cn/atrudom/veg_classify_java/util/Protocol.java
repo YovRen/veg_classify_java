@@ -1,7 +1,7 @@
-package cn.eciot.ble_demo_java.util;
+package cn.atrudom.veg_classify_java.util;
 
 
-import static cn.eciot.ble_demo_java.RecognitionActivity.imageLablesMyQueue;
+import static cn.atrudom.veg_classify_java.RecognitionActivity.imageLablesMyQueue;
 
 import android.annotation.SuppressLint;
 import android.graphics.Bitmap;
@@ -15,16 +15,12 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.stream.IntStream;
 
-import cn.eciot.ble_demo_java.RecognitionActivity.Recognition;
+import cn.atrudom.veg_classify_java.RecognitionActivity.Recognition;
 
 public class Protocol {
-
-    public static int APPROX_WEIGHT_GRAM = 20;
-    public static int QUEUE_TIME_SECOND = 600;
 
     public static class MyTime {
         String timeStr;
@@ -132,6 +128,8 @@ public class Protocol {
         }
     }
 
+    public static int APPROX_WEIGHT_GRAM = 20;
+    public static int QUEUE_TIME_SECOND = 600;
     public static MyQueue<MessageKey> messageKeyMyQueue = new MyQueue<>(QUEUE_TIME_SECOND);
     public static byte[] longByte;
 

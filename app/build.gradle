@@ -12,7 +12,7 @@ android {
     compileSdkVersion 34
 
     defaultConfig {
-        applicationId "cn.eciot.ble_demo_java"
+        applicationId "cn.atrudom.veg_classify_java"
         minSdkVersion 29
         targetSdkVersion 31
         versionCode 1

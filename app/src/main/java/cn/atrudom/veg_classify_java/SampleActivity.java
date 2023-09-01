@@ -1,4 +1,4 @@
-package cn.eciot.ble_demo_java;
+package cn.atrudom.veg_classify_java;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -24,13 +24,10 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.IntStream;
 
-import cn.eciot.ble_demo_java.util.Utils;
+import cn.atrudom.veg_classify_java.util.Utils;
 
 
 public class SampleActivity extends AppCompatActivity {
-
-    static List<SampleInfo> sampleListData = new ArrayList<>();
-    static Adapter listViewAdapter = null;
 
     static class SampleInfo {
         String name;
@@ -84,6 +81,9 @@ public class SampleActivity extends AppCompatActivity {
             return view;
         }
     }
+
+    static List<SampleInfo> sampleListData = new ArrayList<>();
+    static Adapter listViewAdapter = null;
 
     //设置页面机制，重点是自动刷新和点击连接
     @Override

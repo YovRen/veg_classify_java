@@ -1,4 +1,4 @@
-package cn.eciot.ble_demo_java.util;
+package cn.atrudom.veg_classify_java.util;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
@@ -24,6 +24,9 @@ import java.util.List;
 
 public class BleService {
 
+    /*
+     * 信号触发与响应
+     * */
     public interface BluetoothAdapterStateChangeCallback {
         void callback(boolean ok, int errCode, String errMsg);
     }

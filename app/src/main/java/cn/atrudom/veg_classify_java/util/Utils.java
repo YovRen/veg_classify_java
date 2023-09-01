@@ -1,4 +1,4 @@
-package cn.eciot.ble_demo_java.util;
+package cn.atrudom.veg_classify_java.util;
 
 
 import static java.lang.Math.exp;

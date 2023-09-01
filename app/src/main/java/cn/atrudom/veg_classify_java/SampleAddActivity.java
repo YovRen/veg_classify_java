@@ -1,4 +1,4 @@
-package cn.eciot.ble_demo_java;
+package cn.atrudom.veg_classify_java;
 
 import android.annotation.SuppressLint;
 import android.content.ContentValues;
@@ -39,7 +39,7 @@ import java.util.Locale;
 import java.util.Objects;
 
 
-import cn.eciot.ble_demo_java.util.Utils;
+import cn.atrudom.veg_classify_java.util.Utils;
 
 public class SampleAddActivity extends AppCompatActivity {
     private final String FILENAME_FORMAT = "yyyy-MM-dd-HH-mm-ss-SSS";
