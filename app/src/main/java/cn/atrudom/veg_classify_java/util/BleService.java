@@ -89,15 +89,6 @@ public class BleService {
             bluetoothAdapterStateChangeCallback.callback(false, 10001, "");
             return;
         }
-        // 获取定位管理器
-        LocationManager locationManager = (LocationManager) ctx.getSystemService(Context.LOCATION_SERVICE);
-        // 检查GPS和网络定位是否打开
-        boolean gps = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
-        boolean network = locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER);
-        if (!(gps || network)) {
-            bluetoothAdapterStateChangeCallback.callback(false, 10002, "");
-            return;
-        }
         // 回调蓝牙适配器状态变化
         bluetoothAdapterStateChangeCallback.callback(true, 0, "");
 
@@ -174,7 +165,6 @@ public class BleService {
      * 给手机创建BluetoothGatt服务，连接设备如果成功监听特征值变化
      * */
     public static BluetoothGatt bluetoothGatt = null;
-    public static int reconnectTime = 0;
     public static final String characteristicWriteUUID = "0000fff2-0000-1000-8000-00805f9b34fb";
     public static final String characteristicNotifyUUID = "0000fff1-0000-1000-8000-00805f9b34fb";
     public static BluetoothGattCharacteristic characteristicWrite;
@@ -282,14 +272,28 @@ public class BleService {
         bleConnectionStateChangeCallback.callback(false, 10002, "id error"); // 找不到指定ID的设备，回调返回错误信息
     }
 
-    public static void closeBLEConnection() {
+    public static void closeBLEConnection(Context ctx) {
+
+        // 检查蓝牙扫描权限
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+            if (ActivityCompat.checkSelfPermission(ctx, Manifest.permission.BLUETOOTH_SCAN) != PackageManager.PERMISSION_GRANTED) {
+                return;
+            }
+        }
         if (bluetoothGatt != null) {
             bluetoothGatt.disconnect(); // 断开当前连接
         }
     }
     //--------------------------------------------------------------------------------------------
 
-    public static void writeBLECharacteristicValue(String data) {
+    public static void writeBLECharacteristicValue(Context ctx, String data) {
+
+        // 检查蓝牙扫描权限
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+            if (ActivityCompat.checkSelfPermission(ctx, Manifest.permission.BLUETOOTH_SCAN) != PackageManager.PERMISSION_GRANTED) {
+                return;
+            }
+        }
         byte[] byteArray = hexStrToBytes(data);
         characteristicWrite.setValue(byteArray);
         characteristicWrite.setWriteType(BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE);

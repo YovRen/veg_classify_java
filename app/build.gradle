@@ -9,8 +9,6 @@ plugins {
 
 android {
 
-    compileSdkVersion 34
-
     defaultConfig {
         applicationId "cn.atrudom.veg_classify_java"
         minSdkVersion 29
@@ -72,7 +70,7 @@ dependencies {
     implementation "androidx.camera:camera-lifecycle:1.3.0-alpha05"
     implementation "androidx.camera:camera-view:1.3.0-alpha05"
 
-    implementation 'com.squareup.okhttp3:okhttp:3.2.0'
+    implementation 'com.squareup.okhttp3:okhttp:3.10.0'
     implementation 'com.google.code.gson:gson:2.8.9'
 
     testImplementation 'junit:junit:4.13.2'

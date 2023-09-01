@@ -162,11 +162,6 @@ public class BleActivity extends AppCompatActivity {
                     showAlert("请打开蓝牙开关", () -> {
                     });
                 }
-                if (errCode == 10002) {
-                    startActivity(new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS));
-                    showAlert("请打开定位开关", () -> {
-                    });
-                }
             } else {
                 BleService.startBluetoothDevicesDiscovery(this);
             }
